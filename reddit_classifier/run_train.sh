@@ -1,9 +1,9 @@
 
 PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
-MODEL_NAME="reddit-comments"
+MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-PREPROCESS_OUTPUT="${GCS_PATH}/20180130_153450"
+PREPROCESS_OUTPUT="${GCS_PATH}/20180130_155224"
 JOB_ID="${MODEL_NAME}_$(date +%Y%m%d_%H%M%S)"
 OUTPUT_PATH="${GCS_PATH}/model/${JOB_ID}"
 

@@ -1,5 +1,5 @@
 
-MODEL_NAME="reddit-comments"
+MODEL_NAME="redditcomments"
 PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
