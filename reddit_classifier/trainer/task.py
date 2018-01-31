@@ -104,13 +104,8 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
   """Return the feature columns with their names and types."""
   result = []
 
-  # TODO(b/35300113): Reduce the range and other duplication between this and
-  # preprocessing.
-
-  # TODO(b/35300113): Can iterate over metadata so that we don't need to
-  # re-define the schema here?
-
   if model_type == LINEAR:
+    
     # Base columns.
     for column_name in COLUMN_NAMES:
       vocab_size = vocab_sizes[column_name]
@@ -119,6 +114,7 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
       result.append(column)
 
     if use_crosses:
+      
       # All pairs of columns we have added so far.
       for pair in itertools.combinations(result, 2):
         column = tf.contrib.layers.crossed_column(
@@ -129,6 +125,7 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
         result.append(column)
 
   elif model_type == DEEP:
+    
     for column_name in COLUMN_NAMES:
       vocab_size = vocab_sizes[column_name]
       column = tf.contrib.layers.sparse_column_with_integerized_feature(
@@ -140,6 +137,7 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
       result.append(embedding)
   
   elif model_type == DEEP_CLASSIFIER:
+    
     for column_name in COLUMN_NAMES:
       vocab_size = vocab_sizes[column_name]
       column = tf.contrib.layers.sparse_column_with_integerized_feature(
@@ -158,10 +156,7 @@ def gzip_reader_fn():
       compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
 
-def get_transformed_reader_input_fn(transformed_metadata,
-                                    transformed_data_paths,
-                                    batch_size,
-                                    mode):
+def get_transformed_reader_input_fn(transformed_metadata,transformed_data_paths,batch_size,mode):
   """Wrap the get input features function to provide the runtime arguments."""
   return input_fn_maker.build_training_input_fn(
       metadata=transformed_metadata,
@@ -180,11 +175,6 @@ def get_transformed_reader_input_fn(transformed_metadata,
 
 def get_vocab_sizes():
   """Read vocabulary sizes from the metadata."""
-  # TODO(b/35300113) This method will change as we move to tf-transform and use
-  # the new schema and statistics protos. For now return a large-ish constant
-  # (exact vocabulary size not needed, since we are doing "mod" in tf.Learn).
-  # Note that the current workaround might come with a quality sacrifice that
-  # should hopefully be lifted soon.
   return {column_name: int(10*1000) for column_name in COLUMN_NAMES}
 
 
@@ -204,51 +194,71 @@ def get_experiment_fn(args):
     columns = feature_columns(args.model_type, vocab_sizes, use_crosses)
 
     runconfig = tf.contrib.learn.RunConfig()
+    
     cluster = runconfig.cluster_spec
+    
     num_table_shards = max(1, runconfig.num_ps_replicas * 3)
-    num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and
-                         'worker' in cluster.jobs else 0)
+    
+    num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and 'worker' in cluster.jobs else 0)
 
     model_dir = os.path.join(output_dir, MODEL_DIR)
+    
     if args.model_type == LINEAR:
+      
       estimator = tf.contrib.learn.LinearRegressor(
           model_dir=model_dir,
           feature_columns=columns,
           optimizer=tf.contrib.linear_optimizer.SDCAOptimizer(
               example_id_column=KEY_FEATURE_COLUMN,
               symmetric_l2_regularization=args.l2_regularization,
-              num_loss_partitions=num_partitions,  # workers
-              num_table_shards=num_table_shards))  # ps
+              num_loss_partitions=num_partitions,
+              num_table_shards=num_table_shards)
+          )
+    
     elif args.model_type == DEEP:
+      
       estimator = tf.contrib.learn.DNNRegressor(
           hidden_units=args.hidden_units,
           feature_columns=columns,
           model_dir=model_dir)
+    
     elif args.model_type == DEEP_CLASSIFIER:
+      
       estimator = tf.contrib.learn.DNNClassifier(
           hidden_units=args.hidden_units,
           feature_columns=columns,
           model_dir=model_dir)
 
-    transformed_metadata = metadata_io.read_metadata(
-        args.transformed_metadata_path)
+    transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
+    
     raw_metadata = metadata_io.read_metadata(args.raw_metadata_path)
+    
     serving_input_fn = (
         input_fn_maker.build_parsing_transforming_serving_input_fn(
             raw_metadata,
             args.transform_savedmodel,
-            raw_label_keys=[TARGET_FEATURE_COLUMN]))
+            raw_label_keys=[TARGET_FEATURE_COLUMN])
+            )
+    
     export_strategy = tf.contrib.learn.utils.make_export_strategy(
-        serving_input_fn, exports_to_keep=5,
-        default_output_alternative_key=None)
+        serving_input_fn, 
+        exports_to_keep=5,
+        default_output_alternative_key=None
+        )
 
     train_input_fn = get_transformed_reader_input_fn(
-        transformed_metadata, args.train_data_paths, args.batch_size,
-        tf.contrib.learn.ModeKeys.TRAIN)
+        transformed_metadata, 
+        args.train_data_paths, 
+        args.batch_size,
+        tf.contrib.learn.ModeKeys.TRAIN
+        )
 
     eval_input_fn = get_transformed_reader_input_fn(
-        transformed_metadata, args.eval_data_paths, args.batch_size,
-        tf.contrib.learn.ModeKeys.EVAL)
+        transformed_metadata, 
+        args.eval_data_paths, 
+        args.batch_size,
+        tf.contrib.learn.ModeKeys.EVAL
+        )
 
     return tf.contrib.learn.Experiment(
         estimator=estimator,
@@ -257,7 +267,8 @@ def get_experiment_fn(args):
         train_input_fn=train_input_fn,
         eval_input_fn=eval_input_fn,
         export_strategies=export_strategy,
-        min_eval_frequency=500)
+        min_eval_frequency=500
+        )
 
   # Return a function to create an Experiment.
   return get_experiment
@@ -279,7 +290,8 @@ def main(argv=None):
     output_dir = args.output_path
 
   learn_runner.run(experiment_fn=get_experiment_fn(args),
-                   output_dir=output_dir)
+                   output_dir=output_dir
+                   )
 
 
 if __name__ == '__main__':

@@ -1,16 +1,4 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+
 """Schema and tranform definition for the Reddit dataset."""
 
 import tensorflow as tf
@@ -42,7 +30,8 @@ SELECT
   COALESCE(author, '') AS author,
   COALESCE(REGEXP_REPLACE(body, r'\\n+', ' '), '') AS comment_body,
   '' AS comment_parent_body,
-  1 AS toplevel
+  1 AS toplevel,
+  id as example_id
 FROM
   `{table_name}`
 WHERE
@@ -76,7 +65,7 @@ def make_csv_coder(schema, mode=tf.contrib.learn.ModeKeys.TRAIN):
   column_names = [] if mode == tf.contrib.learn.ModeKeys.INFER else ['score']
   column_names += [
       'created_utc', 'subreddit', 'author', 'comment_body',
-      'comment_parent_body', 'toplevel'
+      'comment_parent_body', 'toplevel', 'example_id'
   ]
   return coders.CsvCoder(column_names, schema)
 
@@ -100,6 +89,7 @@ def make_input_schema(mode=tf.contrib.learn.ModeKeys.TRAIN):
       'comment_parent_body': tf.FixedLenFeature(shape=[], dtype=tf.string,
                                                 default_value=''),
       'toplevel': tf.FixedLenFeature(shape=[], dtype=tf.int64),
+      'example_id': tf.FixedLenFeature(shape=[], dtype=tf.string),
   })
   return dataset_schema.from_feature_spec(result)
 

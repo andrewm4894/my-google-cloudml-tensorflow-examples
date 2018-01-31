@@ -4,8 +4,8 @@ PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-MODEL_VERSION="v1"
-DEPLOYMENT_SOURCE="${GCS_PATH}/model/redditcomments_20180130_160537/model/export/Servo/1517328400"
+MODEL_VERSION="v2"
+DEPLOYMENT_SOURCE="${GCS_PATH}/model/redditcomments_20180130_220344/model/export/Servo/1517350191"
 REGION=us-central1
 
 echo "--------------------------------------"
@@ -26,7 +26,7 @@ gcloud ml-engine models create $MODEL_NAME \
 gcloud ml-engine versions create $MODEL_VERSION \
     --model $MODEL_NAME \
     --origin $DEPLOYMENT_SOURCE \
-    --runtime-version=1.2
+    --runtime-version=1.4
 
 # set version to default
 gcloud ml-engine versions set-default $MODEL_VERSION \

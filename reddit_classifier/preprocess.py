@@ -36,8 +36,8 @@ def parse_arguments(argv):
     The parsed arguments as returned by argparse.ArgumentParser.
   """
   parser = argparse.ArgumentParser(
-      description='Runs Preprocessing on the model data.')
-
+      description='Runs Preprocessing on the model data.'
+      )
   parser.add_argument(
       '--project_id', 
       help='The project to which the job will be submitted.'
@@ -76,7 +76,7 @@ def parse_arguments(argv):
   parser.add_argument(
       '--output_dir',
       required=True,
-      help=('Google Cloud Storage or Local directory in which to place outputs.')
+      help='Google Cloud Storage or Local directory in which to place outputs.'
       )
   args, _ = parser.parse_known_args(args=argv[1:])
 
