@@ -179,6 +179,37 @@ def get_vocab_sizes():
   return {column_name: int(10*1000) for column_name in COLUMN_NAMES}
 
 
+def model_fn_extra(estimator):
+  '''
+  A function that takes a specified estimator and returns a function
+  that in turn returns an EstimatorSpec. When the estimatorSpec's 
+  `export_outputs` is defined, it updates it to a PredictOutput created
+  from the existing `predictions` dict.
+
+  Intended to be passed as an arg to the `model_fn` arg in a 
+  `tf.estimator.Estimator(model_fn=...)` call. 
+  '''
+  def _model_fn(features, labels, mode):
+    estimatorSpec = estimator._call_model_fn(
+      features=features, labels=labels, mode=mode, config=estimator.config)
+
+    if estimatorSpec.export_outputs:
+      # in serving mode, return the same fields as in prediction mode; this 
+      # ensures that the instance key in 'predictions' will be among the 
+      # outputs of the SavedModel SignatureDef.
+      estimatorSpec.export_outputs['predict'] = \
+        tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+
+      estimatorSpec.export_outputs['serving_default'] = \
+        tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+
+    tf.logging.info('\nestimatorSpec prediction keys: {}\n' \
+    .format(estimatorSpec.predictions.keys()))
+
+    return estimatorSpec
+  return _model_fn
+  
+
 def get_experiment_fn(args):
   """Wrap the get experiment function to provide the runtime arguments."""
   vocab_sizes = get_vocab_sizes()
@@ -193,15 +224,10 @@ def get_experiment_fn(args):
     """
 
     columns = feature_columns(args.model_type, vocab_sizes, use_crosses)
-
-    runconfig = tf.contrib.learn.RunConfig()
-    
-    cluster = runconfig.cluster_spec
-    
+    runconfig = tf.contrib.learn.RunConfig()    
+    cluster = runconfig.cluster_spec    
     num_table_shards = max(1, runconfig.num_ps_replicas * 3)
-    
     num_partitions = max(1, 1 + cluster.num_tasks('worker') if cluster and 'worker' in cluster.jobs else 0)
-
     model_dir = os.path.join(output_dir, MODEL_DIR)
     
     if args.model_type == LINEAR:
@@ -225,12 +251,18 @@ def get_experiment_fn(args):
     
     elif args.model_type == DEEP_CLASSIFIER:
       
-      estimator = tf.contrib.learn.DNNClassifier(
+      estimator_0 = tf.estimator.DNNClassifier(
           hidden_units=args.hidden_units,
           feature_columns=columns,
           model_dir=model_dir)
           
-      #estimator = forward_features(estimator, 'example_id')
+      estimator_1 = tf.contrib.estimator.forward_features(estimator_0, KEY_FEATURE_COLUMN)
+      estimator = tf.estimator.Estimator(
+                      model_fn=model_fn_extra(estimator_1),
+                      config=runconfig
+                      )
+    
+      #estimator = forward_features(estimator, 'example_id') # could not get this approach to work either
 
     transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
     

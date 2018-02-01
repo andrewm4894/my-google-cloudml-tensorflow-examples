@@ -18,7 +18,6 @@ echo "OUTPUT_PATH="${OUTPUT_PATH}
 echo "--------------------------------------"
 
 gcloud ml-engine jobs submit training "$JOB_ID" \
-  --stream-logs \
   --module-name trainer.task \
   --package-path trainer \
   --staging-bucket "$BUCKET" \
