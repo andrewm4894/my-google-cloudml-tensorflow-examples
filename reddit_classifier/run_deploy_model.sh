@@ -4,8 +4,8 @@ PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-MODEL_VERSION="v2"
-DEPLOYMENT_SOURCE="${GCS_PATH}/model/redditcomments_20180130_220344/model/export/Servo/1517350191"
+MODEL_VERSION="v3"
+DEPLOYMENT_SOURCE="${GCS_PATH}/model/redditcomments_20180131_213022/model/export/Servo/1517434280"
 REGION=us-central1
 
 echo "--------------------------------------"

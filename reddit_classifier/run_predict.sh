@@ -4,7 +4,6 @@ PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-MODEL_VERSION="v2"
 PREPROCESS_OUTPUT="${GCS_PATH}/20180130_215136"
 
 today=$(date --date="-0 days" +%Y%m%d)
@@ -26,14 +25,10 @@ echo "PROJECT="${PROJECT}
 echo "BUCKET="${BUCKET}
 echo "MODEL_NAME="${MODEL_NAME}
 echo "GCS_PATH="${GCS_PATH}
-echo "MODEL_VERSION="${MODEL_VERSION}
 echo "JOB_NAME="${JOB_NAME}
 echo "INPUT_PATHS="${INPUT_PATHS}
 echo "OUTPUT_PATH="${OUTPUT_PATH}
 echo "--------------------------------------"
-
-gcloud ml-engine versions describe $MODEL_VERSION \
-    --model $MODEL_NAME
 
 printf '\n##################################\n'
 printf 'RUN BATCH PREDICTION'

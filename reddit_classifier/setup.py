@@ -4,7 +4,7 @@ NAME = 'trainer'
 VERSION = '1.0'
 TENSORFLOW_TRANSFORM = 'tensorflow-transform==0.1.10'
 PROTOBUF = 'protobuf==3.4.0'
-TENSORFLOW = 'tensorflow==1.3.0'
+TENSORFLOW = 'tensorflow==1.5.0'
 
 
 if __name__ == '__main__':
