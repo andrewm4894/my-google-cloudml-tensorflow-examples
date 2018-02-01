@@ -16,6 +16,7 @@ import tensorflow as tf
 from tensorflow_transform.saved import input_fn_maker
 from tensorflow_transform.tf_metadata import metadata_io
 from tensorflow.contrib.learn.python.learn import learn_runner
+from tensorflow.contrib.estimator import forward_features
 
 MODEL_TYPES = ['linear', 'deep', 'deep_classifier']
 LINEAR, DEEP, DEEP_CLASSIFIER = MODEL_TYPES
@@ -228,6 +229,8 @@ def get_experiment_fn(args):
           hidden_units=args.hidden_units,
           feature_columns=columns,
           model_dir=model_dir)
+          
+      #estimator = forward_features(estimator, 'example_id')
 
     transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
     
@@ -275,7 +278,7 @@ def get_experiment_fn(args):
 
 
 def main(argv=None):
-  """Run a Tensorflow model on the Reddit dataset."""
+  """Run a Tensorflow model."""
   env = json.loads(os.environ.get('TF_CONFIG', '{}'))
   # First find out if there's a task value on the environment variable.
   # If there is none or it is empty define a default one.
