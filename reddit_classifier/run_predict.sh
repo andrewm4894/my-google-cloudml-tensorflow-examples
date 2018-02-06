@@ -4,7 +4,7 @@ PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-PREPROCESS_OUTPUT="${GCS_PATH}/20180130_215136"
+PREPROCESS_OUTPUT="${GCS_PATH}/data/20180206_133815"
 
 today=$(date --date="-0 days" +%Y%m%d)
 now=$(date +"%Y%m%d_%H%M%S")

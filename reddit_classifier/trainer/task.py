@@ -96,7 +96,7 @@ def create_parser():
   parser.add_argument(
       '--ignore_crosses',
       action='store_true',
-      default=False,
+      default=True,
       help='Whether to ignore crosses (linear model only).')
   return parser
 
@@ -197,14 +197,11 @@ def model_fn_extra(estimator):
       # in serving mode, return the same fields as in prediction mode; this 
       # ensures that the instance key in 'predictions' will be among the 
       # outputs of the SavedModel SignatureDef.
-      estimatorSpec.export_outputs['predict'] = \
-        tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+      estimatorSpec.export_outputs['predict'] = tf.estimator.export.PredictOutput(estimatorSpec.predictions)
 
-      estimatorSpec.export_outputs['serving_default'] = \
-        tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+      estimatorSpec.export_outputs['serving_default'] = tf.estimator.export.PredictOutput(estimatorSpec.predictions)
 
-    tf.logging.info('\nestimatorSpec prediction keys: {}\n' \
-    .format(estimatorSpec.predictions.keys()))
+    tf.logging.info('\nestimatorSpec prediction keys: {}\n'.format(estimatorSpec.predictions.keys()))
 
     return estimatorSpec
   return _model_fn
@@ -251,18 +248,22 @@ def get_experiment_fn(args):
     
     elif args.model_type == DEEP_CLASSIFIER:
       
+      # this works
+      #estimator = tf.contrib.learn.DNNClassifier(
+      #    hidden_units=args.hidden_units,
+      #    feature_columns=columns,
+      #    model_dir=model_dir)
+            
       estimator_0 = tf.estimator.DNNClassifier(
+          config=runconfig,
           hidden_units=args.hidden_units,
           feature_columns=columns,
-          model_dir=model_dir)
-          
+          model_dir=model_dir)          
       estimator_1 = tf.contrib.estimator.forward_features(estimator_0, KEY_FEATURE_COLUMN)
       estimator = tf.estimator.Estimator(
                       model_fn=model_fn_extra(estimator_1),
                       config=runconfig
                       )
-    
-      #estimator = forward_features(estimator, 'example_id') # could not get this approach to work either
 
     transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
     

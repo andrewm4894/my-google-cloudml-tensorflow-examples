@@ -3,7 +3,7 @@ MODEL_NAME="redditcomments"
 PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-PREPROCESS_OUTPUT="${GCS_PATH}/$(date +%Y%m%d_%H%M%S)"
+PREPROCESS_OUTPUT="${GCS_PATH}/data/$(date +%Y%m%d_%H%M%S)"
 
 echo "--------------------------------------"
 echo "PROJECT="${PROJECT}

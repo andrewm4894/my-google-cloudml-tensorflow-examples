@@ -7,15 +7,12 @@ BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
 MODEL_VERSION="v1"
-
-today=$(date --date="-0 days" +%Y%m%d)
+SOURCE="${GCS_PATH}/predictions/20180206_163511"
+TARGET_TABLE="zz_tmp_will_expire.${MODEL_NAME}_${MODEL_VERSION}_predictions_test"
   
 printf '\n##################################\n'
 printf 'DISPLAY INPUTS'
 printf '\n##################################\n'
-
-SOURCE="${GCS_PATH}/predictions/20180130_211400"
-TARGET_TABLE="zz_tmp_will_expire.${MODEL_NAME}_${MODEL_VERSION}_predictions_20180130"
 
 echo "--------------------------------------"
 echo "PROJECT="${PROJECT}
