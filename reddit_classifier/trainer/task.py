@@ -35,6 +35,10 @@ COLUMN_NAMES = [
     'comment_parent_body_bow'
 ]
 
+#COLUMN_NAMES = [
+#    'subreddit_id'
+#]
+
 
 def create_parser():
   """Initialize command line parser using arparse.
@@ -147,6 +151,10 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
       embedding = tf.contrib.layers.embedding_column(column,
                                                      embedding_size,
                                                      combiner='mean')
+      
+      #if column_name == 'subreddit_id':
+      #  column = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_identity(column_name, num_buckets=3 ))
+      
       result.append(embedding)
 
   return result
@@ -247,13 +255,13 @@ def get_experiment_fn(args):
           model_dir=model_dir)
     
     elif args.model_type == DEEP_CLASSIFIER:
-      
+      """
       # this works
-      #estimator = tf.contrib.learn.DNNClassifier(
-      #    hidden_units=args.hidden_units,
-      #    feature_columns=columns,
-      #    model_dir=model_dir)
-            
+      estimator = tf.contrib.learn.DNNClassifier(
+          hidden_units=args.hidden_units,
+          feature_columns=columns,
+          model_dir=model_dir)
+      """
       estimator_0 = tf.estimator.DNNClassifier(
           config=runconfig,
           hidden_units=args.hidden_units,
@@ -264,6 +272,7 @@ def get_experiment_fn(args):
                       model_fn=model_fn_extra(estimator_1),
                       config=runconfig
                       )
+                        
 
     transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
     
@@ -273,8 +282,9 @@ def get_experiment_fn(args):
         input_fn_maker.build_parsing_transforming_serving_input_fn(
             raw_metadata,
             args.transform_savedmodel,
-            raw_label_keys=[TARGET_FEATURE_COLUMN])
-            )
+            raw_label_keys=[TARGET_FEATURE_COLUMN],
+            #raw_feature_keys=[KEY_FEATURE_COLUMN],
+            ))
     
     export_strategy = tf.contrib.learn.utils.make_export_strategy(
         serving_input_fn, 
