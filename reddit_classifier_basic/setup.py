@@ -2,7 +2,7 @@ import setuptools
 
 NAME = 'trainer'
 VERSION = '1.0'
-TENSORFLOW_TRANSFORM = 'tensorflow-transform==0.1'
+TENSORFLOW_TRANSFORM = 'tensorflow-transform==0.1.10'
 PROTOBUF = 'protobuf==3.4.0'
 TENSORFLOW = 'tensorflow==1.4.0'
 

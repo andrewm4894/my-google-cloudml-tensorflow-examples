@@ -6,8 +6,8 @@ PROJECT="pmc-analytical-data-mart"
 BUCKET="gs://pmc-ml-samples"
 MODEL_NAME="redditcomments"
 GCS_PATH="${BUCKET}/${MODEL_NAME}"
-MODEL_VERSION="v1"
-SOURCE="${GCS_PATH}/predictions/20180206_163511"
+MODEL_VERSION="v3"
+SOURCE="${GCS_PATH}/predictions/20180305_220431"
 TARGET_TABLE="zz_tmp_will_expire.${MODEL_NAME}_${MODEL_VERSION}_predictions_test"
   
 printf '\n##################################\n'

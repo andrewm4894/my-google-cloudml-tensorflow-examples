@@ -25,12 +25,12 @@ def make_standard_sql(table_name,
   return """
 SELECT
   {score_optional}
-  --created_utc,
+  created_utc,
   COALESCE(subreddit, '') AS subreddit,
-  --COALESCE(author, '') AS author,
-  --COALESCE(REGEXP_REPLACE(body, r'\\n+', ' '), '') AS comment_body,
-  --'' AS comment_parent_body,
-  --1 AS toplevel,
+  COALESCE(author, '') AS author,
+  COALESCE(REGEXP_REPLACE(body, r'\\n+', ' '), '') AS comment_body,
+  '' AS comment_parent_body,
+  1 AS toplevel,
   id as example_id
 FROM
   `{table_name}`
@@ -64,7 +64,8 @@ def make_csv_coder(schema, mode=tf.contrib.learn.ModeKeys.TRAIN):
   """
   column_names = [] if mode == tf.contrib.learn.ModeKeys.INFER else ['score']
   column_names += [
-      'subreddit', 'example_id'
+      'created_utc', 'subreddit', 'author', 'comment_body',
+      'comment_parent_body', 'toplevel', 'example_id'
   ]
   return coders.CsvCoder(column_names, schema)
 
@@ -82,7 +83,13 @@ def make_input_schema(mode=tf.contrib.learn.ModeKeys.TRAIN):
   })
   result.update({
       'subreddit': tf.FixedLenFeature(shape=[], dtype=tf.string),
-      'example_id': tf.FixedLenFeature(shape=[], dtype=tf.string)
+      'author': tf.FixedLenFeature(shape=[], dtype=tf.string),
+      'comment_body': tf.FixedLenFeature(shape=[], dtype=tf.string,
+                                         default_value=''),
+      'comment_parent_body': tf.FixedLenFeature(shape=[], dtype=tf.string,
+                                                default_value=''),
+      'toplevel': tf.FixedLenFeature(shape=[], dtype=tf.int64),
+      'example_id': tf.FixedLenFeature(shape=[], dtype=tf.string),
   })
   return dataset_schema.from_feature_spec(result)
 
@@ -105,14 +112,17 @@ def make_preprocessing_fn(frequency_threshold):
           columns.
     """
     # TODO(b/35001605) Make this "passthrough" more DRY.
-    result = {'score': inputs['score'],
-              'example_id': inputs['example_id']}
+    result = {'score': inputs['score'], 'toplevel': inputs['toplevel']}
 
     result['subreddit_id'] = tft.string_to_int(
         inputs['subreddit'], frequency_threshold=frequency_threshold)
 
+    for name in ('author', 'comment_body', 'comment_parent_body'):
+      words = tf.string_split(inputs[name])
+      # TODO(b/33467613) Translate these to bag-of-words style sparse features.
+      result[name + '_bow'] = tft.string_to_int(
+          words, frequency_threshold=frequency_threshold)
+
     return result
 
   return preprocessing_fn
-  
-  

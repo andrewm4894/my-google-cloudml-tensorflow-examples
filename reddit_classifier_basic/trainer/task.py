@@ -30,13 +30,8 @@ CROSS_HASH_BUCKET_SIZE = int(1e6)
 
 MODEL_DIR = 'model'
 
-#COLUMN_NAMES = [
-#    'example_id', 'subreddit_id', 'toplevel', 'author_bow', 'comment_body_bow',
-#    'comment_parent_body_bow'
-#]
-
 COLUMN_NAMES = [
-    'subreddit_id'
+    'subreddit_id', 'example_id'
 ]
 
 
@@ -148,14 +143,14 @@ def feature_columns(model_type, vocab_sizes, use_crosses):
     
     for column_name in ['subreddit_id']:
     
-      if column_name == KEY_FEATURE_COLUMN:
-        column = tf.feature_column.numeric_column(tf.string_to_number(column_name))
-        result.append(column)
-      elif column_name == 'subreddit_id':
+      if column_name == 'subreddit_id':
         column = tf.feature_column.numeric_column(column_name)
         result.append(column)
+      #elif column_name == KEY_FEATURE_COLUMN:
+      #  column = tf.feature_column.numeric_column(tf.string_to_number(column_name))
+      #  result.append(column)
       else:      
-        print("DO NOTHING")
+        print("DO NOTHING - feature = {}".format(column_name))
         #vocab_size = vocab_sizes[column_name]
         #column = tf.contrib.layers.sparse_column_with_integerized_feature(
         #    column_name, vocab_size, combiner='sum')
@@ -195,32 +190,21 @@ def get_vocab_sizes():
   return {column_name: int(10*1000) for column_name in COLUMN_NAMES}
 
 
-def model_fn_extra(estimator):
-  '''
-  A function that takes a specified estimator and returns a function
-  that in turn returns an EstimatorSpec. When the estimatorSpec's 
-  `export_outputs` is defined, it updates it to a PredictOutput created
-  from the existing `predictions` dict.
+# forward to key-column to export
+def forward_key_to_export(estimator):
+    estimator = tf.contrib.estimator.forward_features(estimator, KEY_FEATURE_COLUMN)
+    # return estimator
 
-  Intended to be passed as an arg to the `model_fn` arg in a 
-  `tf.estimator.Estimator(model_fn=...)` call. 
-  '''
-  def _model_fn(features, labels, mode):
-    estimatorSpec = estimator._call_model_fn(
-      features=features, labels=labels, mode=mode, config=estimator.config)
-
-    if estimatorSpec.export_outputs:
-      # in serving mode, return the same fields as in prediction mode; this 
-      # ensures that the instance key in 'predictions' will be among the 
-      # outputs of the SavedModel SignatureDef.
-      estimatorSpec.export_outputs['predict'] = tf.estimator.export.PredictOutput(estimatorSpec.predictions)
-
-      estimatorSpec.export_outputs['serving_default'] = tf.estimator.export.PredictOutput(estimatorSpec.predictions)
-
-    tf.logging.info('\nestimatorSpec prediction keys: {}\n'.format(estimatorSpec.predictions.keys()))
-
-    return estimatorSpec
-  return _model_fn
+    ## This shouldn't be necessary (I've filed CL/187793590 to update extenders.py with this code)
+    config = estimator.config
+    def model_fn2(features, labels, mode):
+      estimatorSpec = estimator._call_model_fn(features, labels, mode, config=config)
+      if estimatorSpec.export_outputs:
+        for ekey in ['predict', 'serving_default']:
+          estimatorSpec.export_outputs[ekey] = \
+            tf.estimator.export.PredictOutput(estimatorSpec.predictions)
+      return estimatorSpec
+    return tf.estimator.Estimator(model_fn=model_fn2, config=config)
   
 
 def get_experiment_fn(args):
@@ -263,6 +247,7 @@ def get_experiment_fn(args):
           model_dir=model_dir)
     
     elif args.model_type == DEEP_CLASSIFIER:
+      
       """
       # this works
       estimator = tf.contrib.learn.DNNClassifier(
@@ -270,16 +255,12 @@ def get_experiment_fn(args):
           feature_columns=columns,
           model_dir=model_dir)
       """
-      estimator_0 = tf.estimator.DNNClassifier(
+      estimator = tf.estimator.DNNClassifier(
           config=runconfig,
           hidden_units=args.hidden_units,
           feature_columns=columns,
           model_dir=model_dir)          
-      estimator_1 = tf.contrib.estimator.forward_features(estimator_0, KEY_FEATURE_COLUMN)
-      estimator = tf.estimator.Estimator(
-                      model_fn=model_fn_extra(estimator_1),
-                      config=runconfig
-                      )
+      estimator = forward_key_to_export(estimator)
                         
 
     transformed_metadata = metadata_io.read_metadata(args.transformed_metadata_path)
