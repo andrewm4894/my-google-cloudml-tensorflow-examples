@@ -100,16 +100,34 @@ def get_wide_deep():
         default_value=-1
         )
 
-    comment_words = tf.string_split(['comment'])
+    # i have tried all these and none work
+    #comment_words = tf.string_split(features['comment'])
+    #comment_words = tf.string_split(['comment'])
+    #comment_words = tf.string_split(tf.constant(['comment']))
+    #comment_words = tf.string_split([comment])
+    #comment_words = tf.string_split('comment')
+    #comment = tf.constant(['comment'])
+    #comment = tf.constant(dataset['comment'])
+    #comment = tf.constant(comment)
+    #comment_words = tf.string_split(features["comment"])
+    #comment_words = tf.string_split(dataset["comment"])
+    #comment = tf.constant(features.get('comment'))
+    #comment = tf.constant(features.get('comment'))
+    
+    #comment_words = tf.string_split(features.get("comment"))
+    comment_words = tf.string_split(dataset.get("comment"))
+
     comment_densewords = tf.sparse_tensor_to_dense(comment_words, default_value=PADWORD)
     comment_numbers = vocab_table.lookup(comment_densewords)
     comment_padding = tf.constant([[0,0],[0,MAX_DOCUMENT_LENGTH]])
     comment_padded = tf.pad(comment_numbers, comment_padding)
     comment_sliced = tf.slice(comment_padded, [0,0], [-1, MAX_DOCUMENT_LENGTH])
+    print('comment_sliced={}'.format(comment_words))  # (?, 20)
     comment_integerized = tf.contrib.layers.sparse_column_with_integerized_feature(comment_sliced, bucket_size=VOCAB_SIZE, combiner='sum')
     #comment_bow = tf.one_hot(comment_sliced)
     comment_embeds = tf.contrib.layers.embedding_column(comment_integerized, dimension=EMBEDDING_SIZE)
-      
+    print('comment_embeds={}'.format(comment_embeds)) # (?, 20, 10)  
+    
     # Sparse columns are wide, have a linear relationship with the output
     wide = [ subreddit ]
         
