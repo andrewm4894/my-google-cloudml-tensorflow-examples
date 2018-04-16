@@ -29,7 +29,7 @@ gcloud ml-engine jobs submit training ${JOB_ID} \
   --package-path=$(pwd)/trainer \
   --job-dir=${OUTPUT_PATH} \
   --staging-bucket=${STAGING_BUCKET} \
-  --scale-tier=STANDARD_1 \
+  --scale-tier=BASIC \
   --runtime-version=1.4 \
   -- \
   --bucket=${BUCKET} \

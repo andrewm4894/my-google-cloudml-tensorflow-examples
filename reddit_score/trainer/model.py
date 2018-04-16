@@ -29,12 +29,14 @@ BUCKET = None  # set from task.py
 PATTERN = 'of' # gets all files
 
 # Determine CSV, label, and key columns
-CSV_COLUMNS = 'example_id,subreddit,comment,score'.split(',')
+#CSV_COLUMNS = 'example_id,subreddit,comment,score,comment_ints'.split(',')
+CSV_COLUMNS = 'example_id,subreddit,comment,comment_ints,score'.split(',')
 LABEL_COLUMN = 'score'
 KEY_COLUMN = 'example_id'
 
 # Set default values for each CSV column
-DEFAULTS = [['nokey'], ['null'], ['null'], [0.0]]
+#DEFAULTS = [['nokey'], ['null'], ['null'], [0.0], [[0.0],[0.0],[0.0],[0.0],[0.0]] ]
+DEFAULTS = [['nokey'], ['null'], ['null'], [[0],[0]], [0.0] ]
 
 # Define some hyperparameters
 TRAIN_STEPS = 10000
@@ -51,7 +53,7 @@ def read_dataset(prefix, mode, batch_size):
 
         def decode_csv(value_column):
 
-            columns = tf.decode_csv(value_column, record_defaults=DEFAULTS)
+            columns = tf.decode_csv(value_column, field_delim='|', record_defaults=DEFAULTS)
             features = dict(zip(CSV_COLUMNS, columns))
             label = features.pop(LABEL_COLUMN)
             return features, label
@@ -101,7 +103,7 @@ def get_wide_deep():
         )
 
     # i have tried all these and none work
-    #comment_words = tf.string_split(features['comment'])
+    #comment_words = tf.string_split(tf.get_variable('comment'))
     #comment_words = tf.string_split(['comment'])
     #comment_words = tf.string_split(tf.constant(['comment']))
     #comment_words = tf.string_split([comment])
@@ -115,24 +117,27 @@ def get_wide_deep():
     #comment = tf.constant(features.get('comment'))
     
     #comment_words = tf.string_split(features.get("comment"))
-    comment_words = tf.string_split(dataset.get("comment"))
+    #comment_words = tf.string_split(dataset.get("comment"))
 
-    comment_densewords = tf.sparse_tensor_to_dense(comment_words, default_value=PADWORD)
-    comment_numbers = vocab_table.lookup(comment_densewords)
-    comment_padding = tf.constant([[0,0],[0,MAX_DOCUMENT_LENGTH]])
-    comment_padded = tf.pad(comment_numbers, comment_padding)
-    comment_sliced = tf.slice(comment_padded, [0,0], [-1, MAX_DOCUMENT_LENGTH])
-    print('comment_sliced={}'.format(comment_words))  # (?, 20)
-    comment_integerized = tf.contrib.layers.sparse_column_with_integerized_feature(comment_sliced, bucket_size=VOCAB_SIZE, combiner='sum')
+    #comment_densewords = tf.sparse_tensor_to_dense(comment_words, default_value=PADWORD)
+    #comment_numbers = vocab_table.lookup(comment_densewords)
+    #comment_padding = tf.constant([[0,0],[0,MAX_DOCUMENT_LENGTH]])
+    #comment_padded = tf.pad(comment_numbers, comment_padding)
+    #comment_sliced = tf.slice(comment_padded, [0,0], [-1, MAX_DOCUMENT_LENGTH])
+
+    #print('comment_sliced={}'.format(comment_words))  # (?, 20)
+    #comment_integerized = tf.contrib.layers.sparse_column_with_integerized_feature(comment_sliced, bucket_size=VOCAB_SIZE, combiner='sum')
+    
     #comment_bow = tf.one_hot(comment_sliced)
-    comment_embeds = tf.contrib.layers.embedding_column(comment_integerized, dimension=EMBEDDING_SIZE)
-    print('comment_embeds={}'.format(comment_embeds)) # (?, 20, 10)  
+    
+    #comment_embeds = tf.contrib.layers.embedding_column(comment_integerized, dimension=EMBEDDING_SIZE)
+    #print('comment_embeds={}'.format(comment_embeds)) # (?, 20, 10)  
     
     # Sparse columns are wide, have a linear relationship with the output
     wide = [ subreddit ]
         
     # Continuous columns are deep, have a complex relationship with the output
-    deep = [ comment_embeds ]
+    deep = [ ]
 
     return wide, deep
 
@@ -142,7 +147,7 @@ def serving_input_fn():
 
     feature_placeholders = {
         'subreddit': tf.placeholder(tf.string, [None]),
-        'comment': tf.placeholder(tf.string, [None]),
+        #'comment': tf.placeholder(tf.string, [None]),
         KEY_COLUMN: tf.placeholder_with_default(tf.constant(['nokey']), [None])
     }
 

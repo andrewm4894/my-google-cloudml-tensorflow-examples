@@ -70,10 +70,11 @@ def to_csv(rowdict):
     import hashlib
     import copy
 
-    CSV_COLUMNS = 'example_id,subreddit,comment,score'.split(',')
+    #CSV_COLUMNS = 'example_id,subreddit,comment,score,comment_ints'.split(',')
+    CSV_COLUMNS = 'example_id,subreddit,comment,comment_ints,score'.split(',')
 
     for result in [rowdict]:
-        data = ','.join([str(result[k]) if k in result else 'None' for k in CSV_COLUMNS])
+        data = '|'.join([str(result[k]) if k in result else 'None' for k in CSV_COLUMNS])
         yield str('{}'.format(data))
 
 
@@ -130,7 +131,11 @@ def beam_bq_to_csv():
     SELECT 
       example_id,
       subreddit,
-      comment,
+      ifnull(regexp_extract(comment,r'^((?:\\S+\\s+){{1}}\\S+).*'),'EMPTY EMPTY') as comment,
+      concat("[" , 
+        cast(cast(floor(rand()*100) as INT64) as STRING), "," , 
+        cast(cast(floor(rand()*100) as INT64) as STRING), 
+        "]" ) as comment_ints,
       score
     FROM
       (
